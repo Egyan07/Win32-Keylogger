@@ -1,4 +1,4 @@
-# Win32 Keylogger — Advanced Educational Demo
+# Win32 Keylogger: advanced educational demo
 **Coded by Egyan**
 
 A hands-on Windows internals teaching project. Two programs:
@@ -6,7 +6,7 @@ A hands-on Windows internals teaching project. Two programs:
 | Program | Purpose |
 |---|---|
 | `keylogger_demo.c` | Demonstrates 10 core Win32 APIs for keyboard capture, persistence, and process inspection |
-| `detector.c` | Shows how AV/EDR tools detect the above — the defender's perspective |
+| `detector.c` | Shows how AV/EDR tools detect the above, from the defender's perspective |
 
 > **For educational and authorised security research use only.**
 > Only run on machines you own or have explicit written authorisation to test.
@@ -20,24 +20,24 @@ A hands-on Windows internals teaching project. Two programs:
 
 | API | Concept Taught |
 |---|---|
-| `SetWindowsHookEx(WH_KEYBOARD_LL)` | Global low-level keyboard hook; hook chain; message pump dependency |
-| `ToUnicode()` / `GetKeyboardState()` | Correct key → character translation; dead key handling; keyboard layouts |
-| `GetWindowTextW()` + `WideCharToMultiByte()` | Unicode window titles; UTF-16 → UTF-8 conversion |
+| `SetWindowsHookEx(WH_KEYBOARD_LL)` | Global low-level keyboard hook, hook chain, message pump dependency |
+| `ToUnicode()` / `GetKeyboardState()` | Correct key to character translation, dead key handling, keyboard layouts |
+| `GetWindowTextW()` + `WideCharToMultiByte()` | Unicode window titles, UTF-16 to UTF-8 conversion |
 | `GetWindowThreadProcessId()` | Getting PID from a window handle |
 | `OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION)` | Least-privilege process access |
 | `QueryFullProcessImageNameA()` | Full .exe path from a process handle |
-| `CreateMutexA()` + `ERROR_ALREADY_EXISTS` | Kernel-wide named objects; single-instance guard |
-| `RegisterHotKey()` + `WM_HOTKEY` | Global hotkeys; message queue integration |
+| `CreateMutexA()` + `ERROR_ALREADY_EXISTS` | Kernel-wide named objects, single-instance guard |
+| `RegisterHotKey()` + `WM_HOTKEY` | Global hotkeys, message queue integration |
 | `GetComputerNameA()` / `GetUserNameA()` | System context retrieval |
-| `RegOpenKeyExA()` / `RegSetValueExA()` | HKCU persistence; HKCU vs HKLM access rights |
+| `RegOpenKeyExA()` / `RegSetValueExA()` | HKCU persistence, HKCU vs HKLM access rights |
 
 ### Win32 APIs in `detector.c`
 
 | API | Concept Taught |
 |---|---|
-| `RegEnumValueA()` | Enumerating registry values; autorun detection |
+| `RegEnumValueA()` | Enumerating registry values, autorun detection |
 | `CreateToolhelp32Snapshot()` + `Process32FirstW/NextW` | Process enumeration |
-| `FindFirstFileA()` / `FindNextFileA()` | Filesystem scanning; wildcard matching |
+| `FindFirstFileA()` / `FindNextFileA()` | Filesystem scanning, wildcard matching |
 | `GetFileAttributesA()` | Detecting hidden files |
 | `OpenProcessToken()` + `TokenElevation` | Privilege level detection |
 | `GetTokenInformation(TokenPrivileges)` | Enumerating process privileges |
@@ -52,7 +52,7 @@ A hands-on Windows internals teaching project. Two programs:
 Win32-Keylogger/
 ├── keylogger_demo.c     # Attacker perspective -- 10 Win32 APIs demonstrated
 ├── detector.c           # Defender perspective -- how EDRs detect the above
-├── Makefile             # Builds both; cross-compile from Kali or native Windows
+├── Makefile             # Builds both, cross-compiles from Kali or native Windows
 └── README.md
 ```
 
@@ -60,7 +60,7 @@ Win32-Keylogger/
 
 ## Build Instructions
 
-### Option A — Cross-compile on Kali / Ubuntu (recommended for teaching)
+### Option A: cross-compile on Kali or Ubuntu (recommended for teaching)
 
 ```bash
 # Install MinGW cross-compiler
@@ -77,7 +77,7 @@ make detector   # detector.exe
 
 Transfer the `.exe` files to your Windows VM via USB, shared folder, or `scp`.
 
-### Option B — Compile natively on Windows
+### Option B: compile natively on Windows
 
 Install [WinLibs GCC](https://winlibs.com) or MSYS2, edit the Makefile `CC = gcc`, then:
 
@@ -145,17 +145,17 @@ Compared to the basic version, the log now shows:
 
 ## How It Works (Deep Dive)
 
-### `SetWindowsHookEx(WH_KEYBOARD_LL)` — The Hook
+### `SetWindowsHookEx(WH_KEYBOARD_LL)`: the hook
 
 Windows maintains a chain of hooks for each hook type. When you call `SetWindowsHookEx(WH_KEYBOARD_LL, callback, NULL, 0)`:
 
-- `WH_KEYBOARD_LL` — low-level keyboard hook; fires BEFORE the key reaches any application
-- `hMod = NULL` — for LL hooks, the callback runs in the **calling process** (not injected)
-- `dwThreadId = 0` — global hook, applies to all threads
+- `WH_KEYBOARD_LL`, a low-level keyboard hook. It fires before the key reaches any application
+- `hMod = NULL`, so for LL hooks the callback runs in the **calling process** rather than being injected
+- `dwThreadId = 0`, a global hook that applies to all threads
 
-The hook callback (`KeyboardProc`) is called by Windows via the message queue. This is why the message pump loop is **mandatory** — without `GetMessage()` running, Windows times out the hook after ~5 seconds.
+The hook callback (`KeyboardProc`) is called by Windows via the message queue. This is why the message pump loop is **mandatory**. Without `GetMessage()` running, Windows times out the hook after about 5 seconds.
 
-### `ToUnicode()` — Why It Beats a Manual Switch Table
+### `ToUnicode()`: why it beats a manual switch table
 
 The original basic version had an 80-line switch statement manually mapping VK codes. That approach breaks immediately on non-US keyboards.
 
@@ -166,7 +166,7 @@ The original basic version had an 80-line switch statement manually mapping VK c
 - AltGr: on French keyboards, AltGr+e produces `€`
 - International layouts: Arabic, CJK, etc.
 
-### Process Path from Window Handle — The HWND → PID → Path Chain
+### Process path from a window handle: HWND to PID to path
 
 ```c
 DWORD pid = 0;
@@ -184,7 +184,7 @@ CloseHandle(hProc);
 
 ### Single-Instance Mutex
 
-Named mutexes with the `Global\` prefix exist in the kernel's global namespace — visible across all user sessions. The pattern is:
+Named mutexes with the `Global\` prefix exist in the kernel's global namespace, visible across all user sessions. The pattern is:
 
 ```c
 HANDLE h = CreateMutexA(NULL, TRUE, "Global\\MyName");
@@ -193,7 +193,7 @@ if (GetLastError() == ERROR_ALREADY_EXISTS) exit(0);
 
 `CreateMutexA` either creates the mutex (returning a new handle) or opens the existing one (also returning a handle, but setting `ERROR_ALREADY_EXISTS`). Either way you get a valid handle, which is why checking `GetLastError` rather than the return value is the correct pattern.
 
-### HKCU Persistence — No Admin Required
+### HKCU persistence: no admin required
 
 ```
 HKCU\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
@@ -221,7 +221,7 @@ The `detector.c` approach is heuristic. Production EDR systems go further:
 
 - **Kernel callbacks**: Register with `PsSetCreateProcessNotifyRoutine`, `PsSetLoadImageNotifyRoutine` to catch the moment a hook is registered
 - **NtQuerySystemInformation(SystemHandleInformation)**: Enumerate all kernel hook objects across all processes
-- **ETW (Event Tracing for Windows)**: Subscribe to `Microsoft-Windows-Win32k` ETW provider — emits events on `NtUserSetWindowsHookEx` calls
+- **ETW (Event Tracing for Windows)**: Subscribe to the `Microsoft-Windows-Win32k` ETW provider, which emits events on `NtUserSetWindowsHookEx` calls
 - **SSDT hooks (legacy)**: Older AV tools patched the System Service Descriptor Table to intercept `NtUserSetWindowsHookEx` in kernel mode
 
 ---
@@ -248,7 +248,7 @@ del keylogger_demo.exe
 
 - `HKCU\Run` is the first registry key every AV scanner checks. Any persistence here is immediately visible to tools like Sysinternals Autoruns.
 - `WH_KEYBOARD_LL` hooks are logged by Windows in the kernel hook table. There is no way to hide them from kernel-mode AV agents.
-- Logging to `C:\Users\Public\` is world-readable — a poor operational choice, but obvious for lab work.
+- Logging to `C:\Users\Public\` is world-readable, a poor operational choice, but obvious for lab work.
 - The UTF-8 BOM in the log file is a detectable indicator left by tools that write structured log files.
 - A process with no visible window, started from a non-standard path, and present in `HKCU\Run` is trivially flagged by modern EDR heuristics.
 
@@ -256,25 +256,27 @@ del keylogger_demo.exe
 
 ## Changelog
 
-### v2.0.0 (2026-03-13)
-- Fix: `ToUnicode()` dead key double-call implemented — pressing `^` then `e` now correctly produces `ê` on European keyboards
-- Fix: `GetWindowTextA` → `GetWindowTextW` + `WideCharToMultiByte` — preserves non-ASCII window titles in the log
-- Fix: Manual 80-line `vk_to_string()` switch → `ToUnicodeEx` — handles all keyboard layouts automatically
-- Fix: `detector.c` windowless scan O(n×m) → O(n+m) — builds visible-PID set once, no per-process window list rescan
-- Add: Single-instance mutex guard via `Global\` named mutex
-- Add: `Ctrl+Shift+F12` kill switch via `RegisterHotKey`
-- Add: Session header with machine name and username
-- Add: Process path alongside window title via `QueryFullProcessImageNameA`
-- Add: UTF-8 BOM and binary mode log file
-- Add: `detector.c` — companion detection tool showing the defender's perspective
-- Add: `Makefile`, cross-compile support for Kali/Ubuntu → Windows
+**v2.0.0 (2026-03-13)**
 
-### v1.0.1
+- Fixed `ToUnicode()` dead key handling, so `^` then `e` produces `ê` on European layouts
+- Replaced `GetWindowTextA` with `GetWindowTextW` plus `WideCharToMultiByte`, so non-ASCII window titles survive in the log
+- Replaced the 80-line `vk_to_string()` switch with `ToUnicodeEx`, which handles every keyboard layout
+- Rewrote the `detector.c` windowless scan from O(n*m) to O(n+m) by building the visible PID set once
+- Added single-instance guard through a `Global\` named mutex
+- Added `Ctrl+Shift+F12` kill switch through `RegisterHotKey`
+- Added session header with machine name and username
+- Added process path next to the window title through `QueryFullProcessImageNameA`
+- Added UTF-8 BOM and binary mode log writing
+- Added `detector.c`, the companion detection tool
+- Added `Makefile` with cross-compile support for Kali and Ubuntu
+
+**v1.0.1**
+
 - Initial release
 
 ## Disclaimer
 
-This project is for **educational purposes only**. It was built to teach Win32 API internals, keyboard hooking mechanics, Windows persistence mechanisms, and detection/defence techniques — the same concepts covered in OSCP, eCPPT, and Windows malware analysis courses.
+This project is for **educational purposes only**. It was built to teach Win32 API internals, keyboard hooking mechanics, Windows persistence mechanisms, and detection and defence techniques, the same concepts covered in OSCP, eCPPT, and Windows malware analysis courses.
 
 **Do not deploy on any system without explicit written authorisation.**
 
